@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="modern-theme.css">
+  <style>
+    /* Additional styles specific to login page */
+    body {
+      display: flex;
+      flex-direction: row; /* Explicitly set horizontal layout */
+      height: 100vh;
+      overflow: hidden;
+    }
+
+
+    /* Conway game panel styles */
+    .conway-panel {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      background-color: var(--bg-secondary);
+      transition: var(--theme-transition);
+    }
+
+    /* Conway title styling */
+    .conway-title {
+      position: absolute;
+      top: 10px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--accent-primary);
+      padding: 10px 0;
+      background-color: rgba(var(--bg-primary-rgb), 0.7);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 7;
+    }
+
+    /* Conway canvas styling */
+    #conway-canvas {
+      width: 100%;
+      height: calc(100% - 90px); /* Adjust height to account for title and controls */
+      display: block;
+      margin-top: 40px; /* Make room for the title */
+    }
+
+    /* Conway controls */
+    .conway-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px;
+      background-color: rgba(var(--bg-primary-rgb), 0.7);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 6;
+      box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+    }
+
+    .conway-controls button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--accent-primary);
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .conway-controls button:hover {
+      background-color: var(--accent-secondary);
+    }
+
+    /* Dark theme adjustments */
+    body.dark-theme .conway-panel {
+      background-color: rgba(18, 18, 18, 0.3);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    body.dark-theme .conway-controls {
+      background-color: rgba(18, 18, 18, 0.8);
+    }
+
+    /* Dark theme adjustments for login */
+    body.dark-theme .login-wrapper {
+      box-shadow: -4px 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Question mark button for Conway info */
+    .conway-help-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: var(--accent-primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .conway-help-button:hover {
+      background-color: var(--accent-secondary);
+      transform: scale(1.1);
+    }
+
+    /* Conway info panel */
+    .conway-info {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: var(--bg-primary);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      z-index: 30;
+      display: none;
+      border: 1px solid var(--accent-primary);
+    }
+
+    .conway-info.visible {
+      display: block;
+    }
+
+    .conway-info-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background-color: var(--bg-tertiary);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .conway-info h3 {
+      margin-top: 0;
+      color: var(--accent-primary);
+    }
+
+    .conway-info p {
+      margin-bottom: 10px;
+    }
+
+    .conway-info ol {
+      padding-left: 20px;
+      margin: 10px 0;
+    }
+
+    body.dark-theme .conway-info {
+      background-color: var(--bg-secondary);
+      border-color: var(--accent-primary);
+    }
+
+    /* Login container */
+    .login-wrapper {
+      flex: 0 0 400px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--bg-primary);
+      box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 10;
+      transition: var(--theme-transition);
+    }
+
+    .login-container {
+      background-color: var(--bg-primary);
+      padding: var(--spacing-xl);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 320px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .login-container h1 {
+      margin-bottom: var(--spacing-xl);
+      font-size: 24px;
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    .login-container input {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .login-container button {
+      width: 100%;
+      margin-top: var(--spacing-md);
+    }
+
+    .theme-toggle-container {
+      position: absolute;
+      top: var(--spacing-lg);
+      right: var(--spacing-lg);
+    }
+
+    /* Dark theme adjustments */
+    body.dark-theme .login-wrapper {
+      box-shadow: -4px 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Media query for smaller screens */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column; /* Stack elements vertically on small screens */
+      }
+
+      .login-wrapper {
+        flex: 0 0 auto; /* Allow height to be determined by content */
+        width: 100%; /* Take full width */
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1); /* Shadow on top instead of left */
+      }
+
+      .conway-panel {
+        flex: 1; /* Take remaining space */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Conway Game Panel -->
+  <div class="conway-panel">
+    <div class="conway-title"></div>
+    <button id="conway-help-button" class="conway-help-button" title="About the Game">?</button>
+    <canvas id="conway-canvas"></canvas>
+    <div class="conway-controls">
+      <button id="start-pause">Start</button>
+      <button id="clear">Clear</button>
+      <button id="random">Random</button>
+    </div>
+  </div>
+
+  <!-- Conway Info Panel -->
+  <div id="conway-info" class="conway-info">
+    <div id="conway-info-close" class="conway-info-close">×</div>
+    <h3></h3>
+    <p>This cellular automaton demonstrates how simple rules create complex patterns and emergent behavior.</p>
+    <p><strong>The Rules:</strong></p>
+    <ol>
+      <li>Any live cell with fewer than two live neighbors dies (underpopulation)</li>
+      <li>Any live cell with two or three live neighbors lives on</li>
+      <li>Any live cell with more than three live neighbors dies (overpopulation)</li>
+      <li>Any dead cell with exactly three live neighbors becomes a live cell (reproduction)</li>
+    </ol>
+    <p>From these simple rules, complex patterns emerge - from still lifes and oscillators to gliders and spaceships.</p>
+    <p>This connects to Stephen Wolfram's concept of the <strong>Ruliad</strong> - the complete collection of all possible rule systems and their behaviors, suggesting that our universe may be an emergent property of simple computational rules.</p>
+    <p>Click on the grid to toggle cells and create your own patterns!</p>
+  </div>
+
+  <div class="login-wrapper">
+    <div class="theme-toggle-container">
+      <div id="logout-button" class="theme-toggle" title="Logout">
+        <img src="images/logout-icon.png" alt="Logout" style="width: 20px; height: 20px;">
+      </div>
+    </div>
+    <div class="login-container">
+      <h1>Login</h1>
+      <input id="username" type="text" placeholder="Username" required />
+      <input id="password" type="password" placeholder="Password" required />
+      <button id="login-button" class="control primary">Login</button>
+    </div>
+  </div>
+  <!-- Include game script -->
+  <script src="conway.js"></script>
+
+  <script>
+    // Logout button functionality
+    const logoutButton = document.getElementById('logout-button');
+
+    // Add click event listener to logout button
+    logoutButton.addEventListener('click', () => {
+      // Clear user data from localStorage
+      localStorage.removeItem('loggedInUser');
+
+      // Redirect to login page (refresh the page)
+      window.location.reload();
+
+      // Show a message (optional)
+      alert('You have been logged out');
+    });
+
+    // Login functionality
+    const loginButton = document.getElementById('login-button');
+    loginButton.addEventListener('click', () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (username === 'admin' && password === 'password') {
+        localStorage.setItem('loggedInUser', username); // Store username in localStorage
+        window.location.href = 'index.html'; // Redirect to the main app
+      } else {
+        alert('Invalid username or password');
+      }
+    });
+
+    // Set up help button and info panel
+    const helpButton = document.getElementById('conway-help-button');
+    const infoPanel = document.getElementById('conway-info');
+    const closeButton = document.getElementById('conway-info-close');
+
+    if (helpButton && infoPanel && closeButton) {
+      // Show info panel when help button is clicked
+      helpButton.addEventListener('click', () => {
+        infoPanel.classList.add('visible');
+      });
+
+      // Hide info panel when close button is clicked
+      closeButton.addEventListener('click', () => {
+        infoPanel.classList.remove('visible');
+      });
+
+      // Hide info panel when clicking outside of it
+      document.addEventListener('click', (event) => {
+        if (infoPanel.classList.contains('visible') && 
+            !infoPanel.contains(event.target) && 
+            event.target !== helpButton) {
+          infoPanel.classList.remove('visible');
+        }
+      });
+    }
+
+    // Initialize game
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize the game
+      const conwayGame = initConway('conway-canvas', {
+        cellSize: 15,
+        updateInterval: 300,
+        initialDensity: 0.3,
+        fillStyle: 'rgba(0, 102, 204, 0.8)', // Blue color
+        strokeStyle: 'rgba(0, 77, 153, 0.5)', // Darker blue
+        backgroundColor: 'rgba(240, 240, 240, 0.3)' // Light gray background
+      });
+
+      // Set up controls
+      const startPauseButton = document.getElementById('start-pause');
+      const clearButton = document.getElementById('clear');
+      const randomButton = document.getElementById('random');
+
+      // Start/Pause button
+      startPauseButton.addEventListener('click', () => {
+        if (conwayGame.isRunning) {
+          conwayGame.stop();
+          startPauseButton.textContent = 'Start';
+          console.log('Conway simulation paused');
+        } else {
+          conwayGame.start();
+          startPauseButton.textContent = 'Pause';
+          console.log('Conway simulation started');
+        }
+      });
+
+      // Clear button
+      clearButton.addEventListener('click', () => {
+        conwayGame.stop();
+        conwayGame.clearBoard();
+        startPauseButton.textContent = 'Start';
+        console.log('Conway board cleared');
+      });
+
+      // Random pattern button
+      randomButton.addEventListener('click', () => {
+        conwayGame.stop();
+        conwayGame.options.initialDensity = 0.2 + Math.random() * 0.4;
+        conwayGame.initGrid();
+        startPauseButton.textContent = 'Start';
+        console.log(`New Conway pattern created with density: ${conwayGame.options.initialDensity.toFixed(2)}`);
+      });
+
+      // Start the simulation automatically
+      conwayGame.start();
+      startPauseButton.textContent = 'Pause';
+      console.log('Conway simulation initialized and started');
+
+      // Pause the game when user interacts with login form
+      const loginInputs = document.querySelectorAll('.login-container input, .login-container button');
+      loginInputs.forEach(input => {
+        input.addEventListener('focus', () => {
+          console.log('Input focused, pausing Conway game');
+          if (conwayGame && conwayGame.isRunning) conwayGame.stop();
+        });
+
+        input.addEventListener('blur', () => {
+          console.log('Input blurred, resuming Conway game');
+          if (conwayGame && !conwayGame.isRunning) conwayGame.start();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

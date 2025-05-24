@@ -1,0 +1,21 @@
+[
+  {
+    "name": "ff",
+    "environment": "UAT",
+    "ruleName": "ff",
+    "personaType": "XID"
+  },
+  {
+    "name": "CCRE_RULE_1",
+    "environment": "LOCAL",
+    "ruleName": "CCRE_RULE_1",
+    "personaType": "XID"
+  },
+  {
+    "name": "as",
+    "environment": "LOCAL",
+    "ruleName": "f",
+    "personaType": "g",
+    "personaId": "gggg"
+  }
+]
