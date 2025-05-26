@@ -960,6 +960,30 @@ function handleRunLeaf(leafData) {
     if (runPanel) {
         runPanel.scrollIntoView({ behavior: 'smooth' });
     }
+
+    // Get the full data for the leaf node
+    const leafElement = document.querySelector(`.tree-item-leaf[data-id="${leafData.id}"]`);
+    if (!leafElement) {
+        console.error(`Leaf element with ID ${leafData.id} not found`);
+        return;
+    }
+
+    let itemData;
+    try {
+        itemData = JSON.parse(leafElement.dataset.item || '{}');
+    } catch (err) {
+        console.error('Error parsing item data:', err);
+        return;
+    }
+
+    // Automatically trigger the run button click after a short delay
+    // to allow the form to be populated
+    setTimeout(() => {
+        const runButton = document.getElementById('run-button');
+        if (runButton) {
+            runButton.click();
+        }
+    }, 500);
 }
 
 function handleEditLeaf(leafData) {

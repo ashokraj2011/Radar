@@ -1,4 +1,5 @@
 {
+  "useMockApis": false,
   "environments": {
     "DEV": {
       "db": {
@@ -78,7 +79,20 @@
   },
   "defaultEnvironment": "DEV",
   "tokenRefresh": {
-    "nonProd": "http://localhost:8080/auth/refresh",
-    "prod": "https://api.example.com/auth/refresh"
+    "nonProd": "https://xxx",
+    "prod": "https://xxx",
+    "credentials": {
+      "nonProd": {
+        "client_id": "",
+        "client_secret": ""
+      },
+      "prod": {
+        "client_id": "",
+        "client_secret": ""
+      },
+      "grant_type": "client_credentials",
+      "scope": "AppIdClaimsTrust",
+      "intent": "Z"
+    }
   }
 }

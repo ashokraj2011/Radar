@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Config-based Mock API Toggle</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.5;
+        }
+        #output {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Config-based Mock API Toggle</h1>
+    <p>This page tests the configuration-based toggle between mock and real APIs.</p>
+    
+    <button id="check-config">Check Config</button>
+    <button id="toggle-mock">Toggle Mock API</button>
+    <button id="test-api">Test API Call</button>
+    
+    <div id="output">Test output will appear here...</div>
+    
+    <script>
+        // Redirect console output to the output div
+        const outputDiv = document.getElementById('output');
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            outputDiv.textContent += args.join(' ') + '\n';
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            outputDiv.textContent += 'ERROR: ' + args.join(' ') + '\n';
+        };
+        
+        // Check config button
+        document.getElementById('check-config').addEventListener('click', () => {
+            outputDiv.textContent = ''; // Clear previous output
+            
+            try {
+                // Import the config module
+                const config = require('./config');
+                
+                console.log('Current configuration:');
+                console.log(`useMockApis: ${config.useMockApis}`);
+                console.log(`defaultEnvironment: ${config.defaultEnvironment}`);
+                
+                // Import the mockApi module
+                const mockApi = require('./services/mockApi');
+                console.log(`Current mock API state: ${mockApi.isUsingMockApi() ? 'MOCK' : 'REAL'}`);
+            } catch (error) {
+                console.error('Error checking config:', error);
+            }
+        });
+        
+        // Toggle mock API button
+        document.getElementById('toggle-mock').addEventListener('click', () => {
+            outputDiv.textContent = ''; // Clear previous output
+            
+            try {
+                // Import the config module
+                const config = require('./config');
+                
+                // Import the mockApi module
+                const mockApi = require('./services/mockApi');
+                
+                // Toggle the mock API
+                const newState = mockApi.toggleMockApi();
+                console.log(`Toggled mock API. New state: ${newState ? 'MOCK' : 'REAL'}`);
+                
+                // Note: This doesn't update the config.json file, just the in-memory state
+                console.log('Note: This change is temporary and will reset when the app restarts.');
+                console.log('To make a permanent change, edit the config.json file.');
+            } catch (error) {
+                console.error('Error toggling mock API:', error);
+            }
+        });
+        
+        // Test API call button
+        document.getElementById('test-api').addEventListener('click', async () => {
+            outputDiv.textContent = ''; // Clear previous output
+            
+            try {
+                // Import the mockApi module to check current state
+                const mockApi = require('./services/mockApi');
+                console.log(`Current mock API state: ${mockApi.isUsingMockApi() ? 'MOCK' : 'REAL'}`);
+                
+                // Make a test API call
+                console.log('Making test API call...');
+                
+                const response = await fetch('http://example.com/api/test', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('API Response:', JSON.stringify(data, null, 2));
+                
+                if (mockApi.isUsingMockApi()) {
+                    console.log('This was a mock response.');
+                } else {
+                    console.log('This was a real API call.');
+                }
+            } catch (error) {
+                console.error('Error making API call:', error);
+            }
+        });
+    </script>
+</body>
+</html>

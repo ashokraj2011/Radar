@@ -1,5 +1,5 @@
-// renderer.js
-// Core logic for Ruliad Navigator: loading trees, dialogs, context menus, search/filter, and side-panel actions
+// dialogs.js
+// Core logic for Ruliad Navigator: dialogs and token refresh functionality
 
 const config = require('./config');
 const { ipcRenderer } = require('electron');
@@ -7,19 +7,20 @@ const remote = require('@electron/remote');
 const { dialog } = remote;
 const fs = require('fs');
 const db = require('./db');
-const {
-    setupDelegatedTreeListeners,
-    setupContextMenuListeners,
-    filterTrees,
-    loadRequests,
-    loadPrioritySuites,
-    callAdhocRequest,
-    saveAdhocRequest
-} = require('./dialogs'); // dialog logic moved to dialogs.js
 
-// Tokens
-let nonProdToken = null;
-let prodToken = null;
+// Function to handle adhoc request calls
+function callAdhocRequest() {
+    // Implementation of callAdhocRequest
+    console.log('Call adhoc request');
+    // Add your implementation here
+}
+
+// Function to save adhoc requests
+function saveAdhocRequest() {
+    // Implementation of saveAdhocRequest
+    console.log('Save adhoc request');
+    // Add your implementation here
+}
 
 window.addEventListener('DOMContentLoaded', async () => {
     // Initialize DB
@@ -30,57 +31,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         dialog.showErrorBox('Database Error', err.message);
     }
 
-    // Load trees
-    await loadRequests();
-    await loadPrioritySuites();
+    // Note: Token refresh functionality has been moved to tokenRefresh.js
+    // to resolve circular dependency issues
 
-    // Search/filter
-    const searchInput = document.getElementById('tree-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', e => filterTrees(e.target.value));
-    }
-
-    // Expand/Collapse and Context Menu on trees
-    setupDelegatedTreeListeners();
-    setupContextMenuListeners();
-
-    // Dialogs (add-request, add-suite, adhoc, settings)
-    require('./dialogs').setupDialogListeners();
-
-    // Side-panel buttons
-    document.getElementById('refresh-token')?.addEventListener('click', async () => {
-        try {
-            // Show loading indicator if available
-            if (typeof window.showLoading === 'function') {
-                window.showLoading();
-            }
-
-            // Refresh both tokens in parallel
-            const [nonProdResponse, prodResponse] = await Promise.all([
-                fetch(config.tokenRefresh.nonProd, { method: 'POST' }),
-                fetch(config.tokenRefresh.prod, { method: 'POST' })
-            ]);
-
-            // Get the token values
-            nonProdToken = await nonProdResponse.text();
-            prodToken = await prodResponse.text();
-
-            // Hide loading indicator if available
-            if (typeof window.hideLoading === 'function') {
-                window.hideLoading();
-            }
-
-            // Show success notification
-            alert('All tokens refreshed successfully');
-        } catch (err) {
-            // Hide loading indicator if available
-            if (typeof window.hideLoading === 'function') {
-                window.hideLoading();
-            }
-
-            dialog.showErrorBox('Token Error', err.message);
-        }
-    });
+    // Import and call setupDialogListeners from components/dialogs.js
+    require('./components/dialogs').setupDialogListeners();
 
     document.getElementById('adhoc-request')?.addEventListener('click', () => {
         document.getElementById('adhoc-dialog').showModal();
@@ -106,6 +61,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('api-graphql').value = cfg.environments[cfg.defaultEnvironment].apis.graphql;
         document.getElementById('token-nonprod').value = cfg.tokenRefresh.nonProd;
         document.getElementById('token-prod').value = cfg.tokenRefresh.prod;
+        document.getElementById('client-id-nonprod').value = cfg.tokenRefresh.credentials.nonProd.client_id;
+        document.getElementById('client-secret-nonprod').value = cfg.tokenRefresh.credentials.nonProd.client_secret;
+        document.getElementById('client-id-prod').value = cfg.tokenRefresh.credentials.prod.client_id;
+        document.getElementById('client-secret-prod').value = cfg.tokenRefresh.credentials.prod.client_secret;
         document.getElementById('settings-dialog').showModal();
     });
 
@@ -129,6 +88,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         newCfg.environments[env].apis.graphql = document.getElementById('api-graphql').value;
         newCfg.tokenRefresh.nonProd = document.getElementById('token-nonprod').value;
         newCfg.tokenRefresh.prod = document.getElementById('token-prod').value;
+        newCfg.tokenRefresh.credentials.nonProd.client_id = document.getElementById('client-id-nonprod').value;
+        newCfg.tokenRefresh.credentials.nonProd.client_secret = document.getElementById('client-secret-nonprod').value;
+        newCfg.tokenRefresh.credentials.prod.client_id = document.getElementById('client-id-prod').value;
+        newCfg.tokenRefresh.credentials.prod.client_secret = document.getElementById('client-secret-prod').value;
         try {
             await ipcRenderer.invoke('save-config', newCfg);
             alert('Settings saved');
@@ -138,3 +101,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+
+// Export functions for use in other modules
+module.exports = {
+    callAdhocRequest,
+    saveAdhocRequest
+};

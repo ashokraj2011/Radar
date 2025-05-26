@@ -146,6 +146,10 @@ function setupApiCallerPanel() {
     // Call handleAuthTypeChange initially to set up the correct fields
     handleAuthTypeChange();
 
+    // Note: Rule Engine API button has been removed
+    // The rule engine API is now called directly from the Run Rules button
+    // and when right-clicking on a leaf node and selecting "Run"
+
     // Function to update response status display
     const updateResponseStatus = (status, timeMs) => {
         if (!responseStatus || !responseTime) return;

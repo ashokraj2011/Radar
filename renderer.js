@@ -86,6 +86,7 @@ const { setupRuleAnalyzer }              = require('./components/ruleAnalyzer');
 const { setupTreeSearch }                = require('./components/treeSearch'); // Import Tree Search
 const { populateRuleNameDropdown, preloadAllMetadata } = require('./services/ruleMetadata'); // Import ruleMetadata service
 const { initMockApi, toggleMockApi }     = require('./services/mockApi'); // Import mock API service
+const { setupTokenRefresh }              = require('./tokenRefresh'); // Import token refresh functionality
 const db = require('./db'); // Added for getAllApiCalls
 
 let currentEnvironment;
@@ -750,6 +751,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       setupApiCallerPanel(); // Initialize the API Caller panel
       setupRuleAnalyzer(); // Initialize the Rule Analyzer
       setupTreeSearch(); // Initialize the Tree Search functionality
+      setupTokenRefresh(); // Initialize token refresh functionality
       setupMainTabs(); // Initialize the main tabs
       setupKeyboardShortcuts(); // Initialize keyboard shortcuts
       setupViewControls(); // Initialize view controls
@@ -760,8 +762,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       // Initialize mock API service
       console.log(`Renderer: Initializing mock API service...`);
-      initMockApi();
-      console.log(`Renderer: Mock API service initialized.`);
+      const config = require('./config');
+      initMockApi(config.useMockApis);
+      console.log(`Renderer: Mock API service initialized. Using ${config.useMockApis ? 'mock' : 'real'} APIs.`);
 
       // Preload metadata for all environments
       console.log(`Renderer: Preloading metadata for all environments...`);
@@ -933,20 +936,82 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Setup run button
-    document.getElementById('run-button').addEventListener('click', () => {
-      const payload = {
-        ruleName: document.getElementById('run-rule-name').value,
-        environment: document.getElementById('run-env').value,
-        personaType: document.getElementById('run-persona').value,
-        personaId: document.getElementById('run-persona-id').value,
-        jsonContext: JSON.parse(document.getElementById('run-json-context').value || '{}'),
-      };
-      // mock a result & append to history
-      const res = { ...payload, status:'ok', ts:new Date().toISOString() };
-      const li = document.createElement('div');
-      li.className = 'history-item';
-      li.textContent = JSON.stringify(res, null,2);
-      document.getElementById('history-list').prepend(li);
+    document.getElementById('run-button').addEventListener('click', async () => {
+      // Show loading indicator
+      showLoading();
+
+      try {
+        // Get values from Run Rules panel
+        const environment = document.getElementById('run-env').value;
+        const ruleName = document.getElementById('run-rule-name').value;
+        const personaType = document.getElementById('run-persona').value;
+        const personaId = document.getElementById('run-persona-id').value;
+        const jsonContext = document.getElementById('run-json-context').value;
+
+        // Create payload for rule execution
+        const payload = {
+          ruleName,
+          environment,
+          personaType,
+          personaId,
+          jsonContext: JSON.parse(jsonContext || '{}')
+        };
+
+        // Import the ruleEngineApi module
+        const { checkCustomerEligibility } = require('./services/ruleEngineApi');
+
+        // Call the rule engine API
+        const result = await checkCustomerEligibility({
+          environment,
+          personalId: personaId,
+          personalIdType: personaType,
+          rules: [ruleName],
+          requestContext: payload.jsonContext,
+          accessToken: 'dummy-token' // In a real implementation, you would use a valid token
+        });
+
+        console.log('Rule engine API response:', result);
+
+        // Create a history item
+        const historyItem = {
+          ...payload,
+          result,
+          status: 'ok',
+          ts: new Date().toISOString()
+        };
+
+        // Add to history
+        const li = document.createElement('div');
+        li.className = 'history-item';
+        li.textContent = JSON.stringify(historyItem, null, 2);
+        document.getElementById('history-list').prepend(li);
+
+      } catch (error) {
+        console.error('Error executing rule:', error);
+
+        // Create an error history item
+        const errorItem = {
+          ruleName: document.getElementById('run-rule-name').value,
+          environment: document.getElementById('run-env').value,
+          personaType: document.getElementById('run-persona').value,
+          personaId: document.getElementById('run-persona-id').value,
+          error: error.message,
+          status: 'error',
+          ts: new Date().toISOString()
+        };
+
+        // Add to history
+        const li = document.createElement('div');
+        li.className = 'history-item error';
+        li.textContent = JSON.stringify(errorItem, null, 2);
+        document.getElementById('history-list').prepend(li);
+
+        // Show error dialog
+        require('@electron/remote').dialog.showErrorBox('Rule Execution Error', error.message);
+      } finally {
+        // Hide loading indicator
+        hideLoading();
+      }
     });
 
     // Setup analyze button
